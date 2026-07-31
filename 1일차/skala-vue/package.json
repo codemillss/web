@@ -1,0 +1,30 @@
+{
+  "name": "skala-vue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "format": "prettier --write --experimental-cli src/"
+  },
+  "dependencies": {
+    "pinia": "^4.0.2",
+    "vue": "^3.5.40",
+    "vue-router": "^5.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "eslint": "^10.8.0",
+    "eslint-plugin-vue": "^10.10.0",
+    "prettier": "3.9.5",
+    "vite": "^8.1.5",
+    "vite-plugin-vue-devtools": "^8.1.5"
+  },
+  "engines": {
+    "node": "^22.18.0 || >=24.12.0"
+  }
+}
