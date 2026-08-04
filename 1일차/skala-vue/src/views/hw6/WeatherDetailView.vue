@@ -6,6 +6,7 @@ import { useHw6FavoriteStore } from '@/stores/hw6FavoriteStore'
 import { useHw6WeatherStore } from '@/stores/hw6WeatherStore'
 import WeatherForecastChart from '@/components/hw6/WeatherForecastChart.vue'
 import CitySmartBriefing from '@/components/hw6/CitySmartBriefing.vue'
+import { cleanWeatherDesc } from '@/utils/weatherUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -103,8 +104,9 @@ const toggleFav = () => {
     
     <div v-else-if="cityInfo" class="content-wrapper">
       <el-card class="detail-card premium-detail-card" shadow="always">
+        <!-- 상단 헤더 -->
         <div class="title-header">
-          <h3 class="detail-title">📍 {{ cityInfo.name }} 상세 기상 정보</h3>
+          <h3 class="detail-title">📍 {{ cityInfo.name }} 상세 기상 관측 정보</h3>
           <div class="header-right">
             <img v-if="cityInfo.icon" :src="cityInfo.icon" class="weather-icon" alt="날씨 아이콘" />
             <span 
@@ -118,39 +120,41 @@ const toggleFav = () => {
           </div>
         </div>
       
-        <div class="detail-grid">
-          <!-- 좌측: 요약 및 상세 정보 -->
-          <div class="left-column">
+        <!-- 상단 2열: 맞춤형 AI 요약 + 실시간 상세 기상 수치 -->
+        <div class="top-detail-row">
+          <div class="briefing-col">
             <CitySmartBriefing :city="cityInfo" class="briefing-widget" />
-            
+          </div>
+          
+          <div class="info-col">
             <div class="info-content premium-info">
               <p class="highlight">🔹 실시간 기온: <span class="temp-val">{{ displayTemp }}{{ configStore.unitSymbol }}</span></p>
-              <p><strong>기상 현황:</strong> {{ cityInfo.status }}</p>
-              <p><strong>상세 설명:</strong> {{ cityInfo.desc }}</p>
+              <p><strong>기상 현황:</strong> {{ cleanWeatherDesc(cityInfo.status) }}</p>
+              <p><strong>상세 설명:</strong> {{ cleanWeatherDesc(cityInfo.desc) }}</p>
               <p><strong>대기 습도:</strong> {{ cityInfo.humidity }}</p>
               <p><strong>현재 풍속:</strong> {{ cityInfo.wind }}</p>
             </div>
             
             <div class="actions">
               <el-button color="#34495e" style="color: white;" @click="router.push('/hw6')">
-                ← 대시보드로
+                ← 대시보드로 돌아가기
               </el-button>
               <el-button type="primary" plain @click="router.push('/hw6/forecast')">
-                📅 주간 예보
+                📅 주간 예보 보기
               </el-button>
               <el-button type="success" plain @click="router.push('/hw6/air-pollution')">
-                😷 미세먼지
+                😷 미세먼지 현황
               </el-button>
             </div>
           </div>
+        </div>
 
-          <!-- 우측: 날씨 차트 영역 -->
-          <div class="right-column">
-            <div v-if="isChartLoading" class="chart-loading">
-              <el-skeleton :rows="8" animated />
-            </div>
-            <WeatherForecastChart v-else-if="forecastData" :forecastData="forecastData" class="chart-widget" />
+        <!-- 하단: 100% full-width 시분초/주간 날씨 흐름 차트 (와이드 배치) -->
+        <div class="bottom-chart-section">
+          <div v-if="isChartLoading" class="chart-loading">
+            <el-skeleton :rows="8" animated />
           </div>
+          <WeatherForecastChart v-else-if="forecastData" :forecastData="forecastData" class="chart-widget-full" />
         </div>
       </el-card>
     </div>
@@ -169,6 +173,7 @@ const toggleFav = () => {
   box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
   border: none;
   overflow: visible;
+  padding: 10px;
 }
 .title-header {
   display: flex;
@@ -205,32 +210,27 @@ const toggleFav = () => {
 .fav-icon:hover { transform: scale(1.15); filter: brightness(0.9); }
 .fav-icon.active { color: #f1c40f; text-shadow: 0 0 10px rgba(241,196,15,0.4); }
 
-.detail-grid {
-  display: flex;
-  gap: 30px;
-  align-items: stretch;
+.top-detail-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 30px;
 }
-.left-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 320px;
-}
-.right-column {
-  flex: 2;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-@media (max-width: 992px) {
-  .detail-grid {
-    flex-direction: column;
+@media (max-width: 900px) {
+  .top-detail-row {
+    grid-template-columns: 1fr;
   }
+}
+
+.briefing-col, .info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .briefing-widget {
   margin-bottom: 0 !important;
+  height: 100%;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
@@ -274,8 +274,13 @@ const toggleFav = () => {
   font-weight: 600;
 }
 
-.chart-widget {
-  flex: 1;
+.bottom-chart-section {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.chart-widget-full {
+  width: 100%;
   background: white;
   border-radius: 12px;
   padding: 20px;

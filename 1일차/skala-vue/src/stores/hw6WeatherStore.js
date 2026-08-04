@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
-import { getKoreanCityName } from '@/utils/weatherUtils'
+import { getKoreanCityName, cleanWeatherDesc } from '@/utils/weatherUtils'
 
 export const useHw6WeatherStore = defineStore('hw6Weather', () => {
   const weatherList = ref([])
@@ -96,10 +96,10 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
       temp: Math.round(response.data.main.temp * 10) / 10,
       status: response.data.weather[0].main === 'Clear' ? '맑음' :
         response.data.weather[0].main === 'Clouds' ? '구름' :
-          response.data.weather[0].main === 'Rain' ? '비' : response.data.weather[0].description,
+          response.data.weather[0].main === 'Rain' ? '비' : cleanWeatherDesc(response.data.weather[0].description),
       humidity: response.data.main.humidity + '%',
       wind: response.data.wind.speed + 'm/s',
-      desc: response.data.weather[0].description,
+      desc: cleanWeatherDesc(response.data.weather[0].description),
       icon: `https://openweathermap.org/img/wn/${response.data.weather[0].icon}.png`,
       lat: response.data.coord.lat,
       lon: response.data.coord.lon,

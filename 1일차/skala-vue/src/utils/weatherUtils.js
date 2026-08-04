@@ -162,3 +162,15 @@ export function getKoreanCityName(englishName) {
   // 드록한 원본을 반환하거나, 사전에 있으면 사전 값을 반환
   return cityMap[lowerName] || englishName.replace('-si', '').replace(/,[a-z]{2}$/i, '')
 }
+
+/**
+ * 어색한 오픈웨더맵 기상 번역을 자연스러운 한국어 날씨 표기로 정제
+ */
+export function cleanWeatherDesc(text) {
+  if (!text) return ''
+  return text
+    .replace(/온\s*흐림/g, '흐림')
+    .replace(/온흐림/g, '흐림')
+    .replace(/튼구름/g, '구름 많음')
+    .replace(/실구름/g, '구름 조금')
+}
