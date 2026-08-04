@@ -238,11 +238,27 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
   // 과제 6: 신규 API (주간 예보, 미세먼지)
   // ----------------------------------------------------
   
-  // 5일 주간 예보 가져오기
-  const fetchForecast = async (lat, lon) => {
+  // 5일 주간 예보 가져오기 (특수 지역 독도/울릉도 및 커스텀 이름 매핑 지원)
+  const fetchForecast = async (lat, lon, cityNameOverride = '') => {
     const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY
     if (!apiKey) throw new Error('API Key is missing')
     const res = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=kr`)
+    
+    if (res.data && res.data.city) {
+      const isDokdo = (Math.abs(lat - 37.2425) < 0.1 && Math.abs(lon - 131.8669) < 0.1) || 
+                      (cityNameOverride && (cityNameOverride.includes('Dokdo') || cityNameOverride.includes('독도')))
+      const isUlleungdo = (Math.abs(lat - 37.4847) < 0.1 && Math.abs(lon - 130.9010) < 0.1) || 
+                         (cityNameOverride && (cityNameOverride.includes('Ulleungdo') || cityNameOverride.includes('울릉도')))
+
+      if (isDokdo) {
+        res.data.city.name = '독도 (우리땅)'
+      } else if (isUlleungdo) {
+        res.data.city.name = '울릉도'
+      } else if (cityNameOverride) {
+        res.data.city.name = cityNameOverride
+      }
+    }
+
     return res.data
   }
 

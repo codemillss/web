@@ -50,7 +50,7 @@ onMounted(async () => {
     // 차트용 데이터 호출
     isChartLoading.value = true
     try {
-      forecastData.value = await weatherStore.fetchForecast(found.lat, found.lon)
+      forecastData.value = await weatherStore.fetchForecast(found.lat, found.lon, found.name)
     } catch (err) {
       console.error('Forecast fetch error:', err)
     } finally {

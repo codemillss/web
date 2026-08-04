@@ -92,6 +92,7 @@ export function getKoreanCityName(englishName) {
     'jeju': '제주도',
     'dokdo': '독도 (우리땅)',
     'ulleungdo': '울릉도',
+    'uljin': '울진',
     'chuncheon': '춘천',
     'jeonju': '전주',
     'ulsan': '울산',

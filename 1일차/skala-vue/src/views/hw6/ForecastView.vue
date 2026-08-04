@@ -48,7 +48,7 @@ watch(selectedCityId, async (newId) => {
   isLoading.value = true
   forecastData.value = null
   try {
-    const data = await weatherStore.fetchForecast(targetCity.lat, targetCity.lon)
+    const data = await weatherStore.fetchForecast(targetCity.lat, targetCity.lon, targetCity.name)
     // 3시간 간격 데이터(40개)를 날짜별로 그룹화
     const grouped = {}
     data.list.forEach(item => {
@@ -59,6 +59,7 @@ watch(selectedCityId, async (newId) => {
     
     forecastData.value = {
       city: data.city,
+      cityName: targetCity.name || getKoreanCityName(data.city.name) || data.city.name,
       daily: grouped
     }
   } catch (err) {
@@ -97,7 +98,7 @@ const getDayName = (dateStr) => {
       
       <div v-else-if="forecastData" class="forecast-content">
         <div class="city-header">
-          <h3>{{ getKoreanCityName(forecastData.city.name) || forecastData.city.name }}의 주간 예보</h3>
+          <h3>{{ forecastData.cityName || getKoreanCityName(forecastData.city.name) || forecastData.city.name }}의 주간 예보</h3>
           <p class="subtitle">3시간 간격의 기온 및 날씨 변화</p>
         </div>
 
