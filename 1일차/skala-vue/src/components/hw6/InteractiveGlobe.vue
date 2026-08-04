@@ -242,7 +242,7 @@ onUnmounted(() => {
       <div class="legend-item"><span class="legend-color" style="background: #ff5252"></span> 25°C 이상 (더움)</div>
       <div class="legend-item"><span class="legend-color" style="background: #67c23a"></span> 1°C ~ 24°C (보통)</div>
       <div class="legend-item"><span class="legend-color" style="background: #409eff"></span> 0°C 이하 (추움)</div>
-      <div class="legend-item"><span class="legend-color" style="background: #f1c40f"></span> 🇰🇷 독도</div>
+      <div class="legend-item"><span class="legend-color" style="background: #f1c40f"></span> 🇰🇷 독도는 우리땅!</div>
     </div>
   </div>
 </template>
