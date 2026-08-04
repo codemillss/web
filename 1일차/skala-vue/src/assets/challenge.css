@@ -1,0 +1,16 @@
+/* challenge.css - SampleFifteen 컴포넌트 실습용 외부 스타일 */
+.btn-external {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.btn-external:hover {
+  background-color: #2980b9;
+}
