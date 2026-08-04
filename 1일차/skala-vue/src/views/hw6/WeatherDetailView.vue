@@ -5,6 +5,7 @@ import { useConfigStore } from '@/stores/configStore'
 import { useHw6FavoriteStore } from '@/stores/hw6FavoriteStore'
 import { useHw6WeatherStore } from '@/stores/hw6WeatherStore'
 import WeatherForecastChart from '@/components/hw6/WeatherForecastChart.vue'
+import CitySmartBriefing from '@/components/hw6/CitySmartBriefing.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -100,113 +101,196 @@ const toggleFav = () => {
       <el-skeleton :rows="5" animated />
     </div>
     
-    <el-card v-else-if="cityInfo" class="detail-card" shadow="always">
-      <div class="title-header">
-        <h3 class="detail-title">📍 지역별 상세 기상 관측 정보</h3>
-        <div class="header-right">
-          <img v-if="cityInfo.icon" :src="cityInfo.icon" class="weather-icon" alt="날씨 아이콘" />
-          <span 
-            class="fav-icon" 
-            :class="{ active: favoriteStore.isFavorite(cityInfo.id) }"
-            @click="toggleFav"
-            title="즐겨찾기 토글"
-          >
-            {{ favoriteStore.isFavorite(cityInfo.id) ? '⭐' : '☆' }}
-          </span>
+    <div v-else-if="cityInfo" class="content-wrapper">
+      <el-card class="detail-card premium-detail-card" shadow="always">
+        <div class="title-header">
+          <h3 class="detail-title">📍 {{ cityInfo.name }} 상세 기상 정보</h3>
+          <div class="header-right">
+            <img v-if="cityInfo.icon" :src="cityInfo.icon" class="weather-icon" alt="날씨 아이콘" />
+            <span 
+              class="fav-icon" 
+              :class="{ active: favoriteStore.isFavorite(cityInfo.id) }"
+              @click="toggleFav"
+              title="즐겨찾기 토글"
+            >
+              {{ favoriteStore.isFavorite(cityInfo.id) ? '⭐' : '☆' }}
+            </span>
+          </div>
         </div>
-      </div>
       
-      <div class="info-content">
-        <p class="highlight">🔹 지정 지역: {{ cityInfo.name }}</p>
-        <p>실시간 기온: {{ displayTemp }}{{ configStore.unitSymbol }}</p>
-        <p>기상 현황: {{ cityInfo.status }}</p>
-        <p>상세 설명: {{ cityInfo.desc }}</p>
-        <p>대기 습도: {{ cityInfo.humidity }}</p>
-        <p>현재 풍속: {{ cityInfo.wind }}</p>
-      </div>
-      
-      <div class="actions">
-        <el-button color="#34495e" style="color: white;" @click="router.push('/hw6')">
-          ← 메인 대시보드로 돌아가기
-        </el-button>
-        <el-button type="primary" plain @click="router.push('/hw6/forecast')">
-          📅 주간 예보 보기
-        </el-button>
-        <el-button type="success" plain @click="router.push('/hw6/air-pollution')">
-          😷 미세먼지 현황 보기
-        </el-button>
-      </div>
+        <div class="detail-grid">
+          <!-- 좌측: 요약 및 상세 정보 -->
+          <div class="left-column">
+            <CitySmartBriefing :city="cityInfo" class="briefing-widget" />
+            
+            <div class="info-content premium-info">
+              <p class="highlight">🔹 실시간 기온: <span class="temp-val">{{ displayTemp }}{{ configStore.unitSymbol }}</span></p>
+              <p><strong>기상 현황:</strong> {{ cityInfo.status }}</p>
+              <p><strong>상세 설명:</strong> {{ cityInfo.desc }}</p>
+              <p><strong>대기 습도:</strong> {{ cityInfo.humidity }}</p>
+              <p><strong>현재 풍속:</strong> {{ cityInfo.wind }}</p>
+            </div>
+            
+            <div class="actions">
+              <el-button color="#34495e" style="color: white;" @click="router.push('/hw6')">
+                ← 대시보드로
+              </el-button>
+              <el-button type="primary" plain @click="router.push('/hw6/forecast')">
+                📅 주간 예보
+              </el-button>
+              <el-button type="success" plain @click="router.push('/hw6/air-pollution')">
+                😷 미세먼지
+              </el-button>
+            </div>
+          </div>
 
-      <!-- 날씨 차트 영역 -->
-      <div v-if="isChartLoading" style="margin-top: 20px;">
-        <el-skeleton :rows="4" animated />
-      </div>
-      <WeatherForecastChart v-else-if="forecastData" :forecastData="forecastData" />
-
-    </el-card>
+          <!-- 우측: 날씨 차트 영역 -->
+          <div class="right-column">
+            <div v-if="isChartLoading" class="chart-loading">
+              <el-skeleton :rows="8" animated />
+            </div>
+            <WeatherForecastChart v-else-if="forecastData" :forecastData="forecastData" class="chart-widget" />
+          </div>
+        </div>
+      </el-card>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .detail-container {
-  max-width: 800px;
+  max-width: 1400px;
   margin: 0 auto;
+  padding: 0 20px;
 }
-.detail-card {
-  border-radius: 8px;
+.premium-detail-card {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
+  border: none;
+  overflow: visible;
 }
 .title-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f0f2f5;
 }
 .header-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .weather-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 .detail-title {
   margin: 0;
-  color: #303133;
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a1c29;
 }
 .fav-icon {
   cursor: pointer;
-  font-size: 24px;
-  color: #ccc;
-  transition: transform 0.2s;
+  font-size: 28px;
+  color: #dcdfe6;
+  transition: all 0.2s;
   user-select: none;
 }
-.fav-icon:hover { transform: scale(1.2); }
-.fav-icon.active { color: #f1c40f; }
+.fav-icon:hover { transform: scale(1.15); filter: brightness(0.9); }
+.fav-icon.active { color: #f1c40f; text-shadow: 0 0 10px rgba(241,196,15,0.4); }
 
-.info-content {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 8px;
-  line-height: 1.8;
-  color: #606266;
-  margin-bottom: 20px;
+.detail-grid {
+  display: flex;
+  gap: 30px;
+  align-items: stretch;
 }
-.info-content p {
-  margin: 0;
+.left-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 320px;
+}
+.right-column {
+  flex: 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 992px) {
+  .detail-grid {
+    flex-direction: column;
+  }
+}
+
+.briefing-widget {
+  margin-bottom: 0 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.premium-info {
+  background: linear-gradient(145deg, #ffffff, #f5f7fa);
+  padding: 24px;
+  border-radius: 12px;
+  line-height: 1.8;
+  color: #4a4a4a;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.premium-info p {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+}
+.premium-info p:last-child {
+  margin-bottom: 0;
 }
 .highlight {
   color: #e74c3c;
-  font-weight: bold;
-  margin-bottom: 10px !important;
+  font-weight: 800;
+  font-size: 18px !important;
+  margin-bottom: 16px !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+.temp-val {
+  font-size: 24px;
+  color: #2c3e50;
+}
+
 .actions {
-  text-align: left;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.actions .el-button {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.chart-widget {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.chart-loading {
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 12px;
 }
 .skeleton-wrapper {
   background: white;
-  padding: 30px;
-  border-radius: 8px;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 </style>

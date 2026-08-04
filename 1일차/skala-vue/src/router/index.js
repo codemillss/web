@@ -4,9 +4,12 @@ const router = createRouter({
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
-    } else {
-      return { top: 0, behavior: 'smooth' }
     }
+    // 동일한 페이지에서 쿼리 파라미터만 변경(예: 검색)될 때는 상단으로 스크롤하지 않음
+    if (to.path === from.path) {
+      return false
+    }
+    return { top: 0, behavior: 'smooth' }
   },
   routes: [
     {

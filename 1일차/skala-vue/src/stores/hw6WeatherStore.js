@@ -10,42 +10,38 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
   const error = ref(null)
   const isAdding = ref(false) // 개별 도시 추가 로딩 상태
 
-  // 로컬스토리지에서 저장된 도시 목록 가져오기 (핵심 도시 + 대륙별 대표 도시 보장)
-  const CITIES_VERSION = 'hw6_saved_cities_v3'
+  // 로컬스토리지에서 저장된 도시 목록 가져오기
+  const CITIES_VERSION = 'hw6_saved_cities_v7'
   const getSavedCities = () => {
-    const saved = localStorage.getItem(CITIES_VERSION)
-    // 기본값: 한국 핵심 도시 + 대륙별 대표 도시 3~4개씩
+    // 우리나라 주요도시 최소 5개 + 일본, 태국, 카자흐스탄, 이집트, 우간다, 영국, 헝가리, 미국(LA, 텍사스 휴스턴), 칠레, 브라질
     const defaultCities = [
-      // 한국
-      'Seoul', 'Suwon', 'Busan', 'Jeju', 'Ulleungdo', 'Dokdo',
+      // 대한민국 (최소 5개)
+      'Seoul', 'Busan', 'Incheon', 'Daegu', 'Daejeon',
       // 아시아
-      'Tokyo', 'Osaka', 'Beijing', 'Bangkok',
-      'Almaty', 'Delhi', 'Kuala Lumpur', 'Chiang Mai',
+      'Tokyo', 'Bangkok', 'Almaty',
       // 유럽
-      'London', 'Paris', 'Berlin', 'Rome,IT', 'Sofia',
-      // 북미
-      'New York', 'Los Angeles', 'Chicago', 'Toronto', 'San Francisco',
+      'London', 'Budapest',
+      // 북미 (미국)
+      'Los Angeles', 'Houston',
       // 남미
-      'Sao Paulo', 'Buenos Aires', 'Lima', 'Bogota', 'Medellin',
+      'Santiago', 'Sao Paulo',
       // 아프리카
-      'Cairo', 'Lagos', 'Nairobi', 'Johannesburg', 'Kampala', 'Luanda',
-      // 오세아니아
-      'Sydney', 'Melbourne,AU', 'Auckland'
+      'Cairo', 'Kampala'
     ]
+
     // 구 키 데이터 삭제
     localStorage.removeItem('hw6_saved_cities')
+    localStorage.removeItem('hw6_saved_cities_v3')
+    localStorage.removeItem('hw6_saved_cities_v4')
+    localStorage.removeItem('hw6_saved_cities_v5')
+    localStorage.removeItem('hw6_saved_cities_v6')
+
     const saved2 = localStorage.getItem(CITIES_VERSION)
     let list = saved2 ? JSON.parse(saved2) : defaultCities
-    const coreCities = [
-      'Seoul', 'Suwon', 'Busan', 'Jeju', 'Ulleungdo', 'Dokdo',
-      'Tokyo', 'Osaka', 'Beijing', 'Bangkok',
-      'Almaty', 'Delhi', 'Kuala Lumpur', 'Chiang Mai',
-      'London', 'Paris', 'Berlin', 'Rome,IT', 'Sofia',
-      'New York', 'Los Angeles', 'Chicago', 'Toronto', 'San Francisco',
-      'Sao Paulo', 'Buenos Aires', 'Lima', 'Bogota', 'Medellin',
-      'Cairo', 'Lagos', 'Nairobi', 'Johannesburg', 'Kampala', 'Luanda',
-      'Sydney', 'Melbourne,AU', 'Auckland'
-    ]
+
+    // 핵심 도시 목록 (언제나 노출되어야 하는 도시들)
+    const coreCities = [...defaultCities]
+
     coreCities.forEach(city => {
       const exists = list.some(c => c.toLowerCase() === city.toLowerCase() || c.toLowerCase() === (city + '-si').toLowerCase())
       if (!exists) list.push(city)
@@ -87,23 +83,9 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
       translatedName = target.name
       customId = target.id
     } else {
-      // 1. [자동 번역 로직] Geocoding API 연동
-      let autoKoreanName = ''
-      try {
-        const geoRes = await axios.get(`https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${apiKey}`)
-        if (geoRes.data && geoRes.data.length > 0) {
-          const localNames = geoRes.data[0].local_names
-          if (localNames && localNames.ko) {
-            autoKoreanName = localNames.ko.replace(/(특별|광역|특례)?시$/, '') // '수원시' -> '수원', '부산광역시' -> '부산'
-          }
-        }
-      } catch (e) {
-        console.warn('Geocoding API 연동 실패 (자동 한글 매핑 건너뜀)', e)
-      }
-
-      // 2. 본 날씨 데이터 Fetch
+      // 1. [로컬 번역 로직] 지오코딩 우회
       response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${apiKey}&units=metric&lang=kr`)
-      translatedName = autoKoreanName || getKoreanCityName(response.data.name) || getKoreanCityName(cityName)
+      translatedName = getKoreanCityName(response.data.name) || getKoreanCityName(cityName) || response.data.name
       translatedName = translatedName.replace(/(특별|광역|특례)?시$/, '')
       customId = response.data.name.replace(/-si$/i, '')
     }
@@ -112,13 +94,13 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
       id: customId,
       name: translatedName,
       temp: Math.round(response.data.main.temp * 10) / 10,
-      status: response.data.weather[0].main === 'Clear' ? '맑음' : 
-              response.data.weather[0].main === 'Clouds' ? '구름' : 
-              response.data.weather[0].main === 'Rain' ? '비' : response.data.weather[0].description,
+      status: response.data.weather[0].main === 'Clear' ? '맑음' :
+        response.data.weather[0].main === 'Clouds' ? '구름' :
+          response.data.weather[0].main === 'Rain' ? '비' : response.data.weather[0].description,
       humidity: response.data.main.humidity + '%',
       wind: response.data.wind.speed + 'm/s',
       desc: response.data.weather[0].description,
-      icon: `http://openweathermap.org/img/wn/${response.data.weather[0].icon}.png`,
+      icon: `https://openweathermap.org/img/wn/${response.data.weather[0].icon}.png`,
       lat: response.data.coord.lat,
       lon: response.data.coord.lon,
       queryName: cityName // 저장용 쿼리
@@ -129,7 +111,7 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
   const fetchWeather = async () => {
     isLoading.value = true
     error.value = null
-    
+
     const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY
     if (!apiKey || apiKey === 'your_api_key_here') {
       console.warn('OpenWeatherMap API Key가 없어서 임시 MOCK 데이터를 사용합니다.')
@@ -163,15 +145,27 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
       // Promise.allSettled를 통해 일부 도시가 실패해도 나머지는 로드되게 처리
       const promises = savedCities.value.map(city => fetchSingleCityData(city, apiKey))
       const results = await Promise.allSettled(promises)
-      
+
       const successfulData = results
         .filter(result => result.status === 'fulfilled')
         .map(result => result.value)
-        
+
+      if (successfulData.length === 0) {
+        throw new Error('API 한도초과(429) 또는 네트워크 에러')
+      }
       weatherList.value = successfulData
     } catch (err) {
       console.error(err)
       error.value = err.message || '데이터를 불러오지 못했습니다.'
+      console.warn('Fallback: API 차단으로 인해 MOCK 데이터를 대신 표시합니다.')
+      weatherList.value = [
+        { id: 'Seoul', name: '서울', temp: 28, status: '맑음', humidity: '55%', wind: '2.5m/s', desc: 'API 제한 (MOCK)', lat: 37.5665, lon: 126.9780 },
+        { id: 'Dokdo', name: '독도 (우리땅)', temp: 22, status: '맑음', humidity: '60%', wind: '5.0m/s', desc: 'API 제한 (MOCK)', lat: 37.2425, lon: 131.8669 },
+        { id: 'Tokyo', name: '도쿄', temp: 30, status: '구름', humidity: '60%', wind: '3.0m/s', desc: 'API 제한 (MOCK)', lat: 35.6895, lon: 139.6917 },
+        { id: 'New York', name: '뉴욕', temp: 25, status: '비', humidity: '70%', wind: '1.5m/s', desc: 'API 제한 (MOCK)', lat: 40.7128, lon: -74.0060 },
+        { id: 'Paris', name: '파리', temp: 20, status: '구름', humidity: '50%', wind: '2.0m/s', desc: 'API 제한 (MOCK)', lat: 48.8566, lon: 2.3522 },
+        { id: 'Sydney', name: '시드니', temp: 18, status: '맑음', humidity: '45%', wind: '4.5m/s', desc: 'API 제한 (MOCK)', lat: -33.8688, lon: 151.2093 }
+      ]
     } finally {
       isLoading.value = false
     }
@@ -197,7 +191,7 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
     isAdding.value = true
     try {
       const data = await fetchSingleCityData(cityName, apiKey)
-      
+
       // 혹시 결과의 id(이름)로 또 중복되는지 검사
       if (weatherList.value.some(c => c.id === data.id)) {
         ElMessage.info('이미 대시보드에 추가된 도시입니다.')
@@ -225,9 +219,9 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
     // 1. weatherList에서 삭제
     const target = weatherList.value.find(c => c.id === cityId)
     if (!target) return
-    
+
     weatherList.value = weatherList.value.filter(c => c.id !== cityId)
-    
+
     // 2. savedCities에서 삭제
     savedCities.value = savedCities.value.filter(c => c !== target.queryName)
     saveToStorage()
@@ -237,18 +231,18 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
   // ----------------------------------------------------
   // 과제 6: 신규 API (주간 예보, 미세먼지)
   // ----------------------------------------------------
-  
+
   // 5일 주간 예보 가져오기 (특수 지역 독도/울릉도 및 커스텀 이름 매핑 지원)
   const fetchForecast = async (lat, lon, cityNameOverride = '') => {
     const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY
     if (!apiKey) throw new Error('API Key is missing')
     const res = await axios.get(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=kr`)
-    
+
     if (res.data && res.data.city) {
-      const isDokdo = (Math.abs(lat - 37.2425) < 0.1 && Math.abs(lon - 131.8669) < 0.1) || 
-                      (cityNameOverride && (cityNameOverride.includes('Dokdo') || cityNameOverride.includes('독도')))
-      const isUlleungdo = (Math.abs(lat - 37.4847) < 0.1 && Math.abs(lon - 130.9010) < 0.1) || 
-                         (cityNameOverride && (cityNameOverride.includes('Ulleungdo') || cityNameOverride.includes('울릉도')))
+      const isDokdo = (Math.abs(lat - 37.2425) < 0.1 && Math.abs(lon - 131.8669) < 0.1) ||
+        (cityNameOverride && (cityNameOverride.includes('Dokdo') || cityNameOverride.includes('독도')))
+      const isUlleungdo = (Math.abs(lat - 37.4847) < 0.1 && Math.abs(lon - 130.9010) < 0.1) ||
+        (cityNameOverride && (cityNameOverride.includes('Ulleungdo') || cityNameOverride.includes('울릉도')))
 
       if (isDokdo) {
         res.data.city.name = '독도 (우리땅)'
@@ -270,8 +264,8 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
     return res.data
   }
 
-  return { 
-    weatherList, isLoading, error, isAdding, 
+  return {
+    weatherList, isLoading, error, isAdding,
     fetchWeather, fetchSingleCityData, addCity, removeCity,
     fetchForecast, fetchAirPollution
   }

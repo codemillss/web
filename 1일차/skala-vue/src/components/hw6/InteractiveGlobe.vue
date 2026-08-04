@@ -11,6 +11,11 @@ const props = defineProps({
   }
 })
 
+const isLegendOpen = ref(true)
+const toggleLegend = () => {
+  isLegendOpen.value = !isLegendOpen.value
+}
+
 const globeContainer = ref(null)
 let globeInstance = null
 const router = useRouter()
@@ -84,64 +89,68 @@ defineExpose({
 })
 
 onMounted(() => {
-  globeInstance = Globe()(globeContainer.value)
-    .globeImageUrl(customEarth)
-    .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-    .showAtmosphere(true)
-    .atmosphereColor('lightskyblue')
-    .atmosphereAltitude(0.25)
-    .backgroundColor('rgba(0,0,0,0)') // 투명하게 해서 앱 배경과 어우러지게
-    .width(globeContainer.value.clientWidth)
-    .height(400)
-    .htmlElementsData(getGlobeData())
-    .htmlElement(d => {
-      const el = document.createElement('div')
-      
-      // 마커 컨테이너 (작은 점 + 숨겨진 툴팁)
-      el.innerHTML = `
-        <div class="marker-container" style="position: relative; pointer-events: auto; cursor: pointer; display: flex; flex-direction: column; align-items: center;">
-          <!-- 툴팁 (기본은 투명/숨김 처리하여 클릭 방해 방지) -->
-          <div class="marker-tooltip" style="opacity: 0; pointer-events: none; position: absolute; bottom: 18px; background: rgba(20,20,20,0.9); color: white; padding: 6px 12px; border-radius: 8px; border: 1px solid ${d.color}; white-space: nowrap; font-size: 14px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: opacity 0.2s, transform 0.2s; transform: translateY(5px);">
-            ${d.label} <span style="font-size: 12px; font-weight: normal; color: #ccc;">(${d.status})</span>
+  try {
+    globeInstance = Globe()(globeContainer.value)
+      .globeImageUrl(customEarth)
+      .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+      .showAtmosphere(true)
+      .atmosphereColor('lightskyblue')
+      .atmosphereAltitude(0.25)
+      .backgroundColor('rgba(0,0,0,0)') // 투명하게 해서 앱 배경과 어우러지게
+      .width(globeContainer.value.clientWidth)
+      .height(400)
+      .htmlElementsData(getGlobeData())
+      .htmlElement(d => {
+        const el = document.createElement('div')
+        
+        // 마커 컨테이너 (작은 점 + 숨겨진 툴팁)
+        el.innerHTML = `
+          <div class="marker-container" style="position: relative; pointer-events: auto; cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+            <!-- 툴팁 (기본은 투명/숨김 처리하여 클릭 방해 방지) -->
+            <div class="marker-tooltip" style="opacity: 0; pointer-events: none; position: absolute; bottom: 18px; background: rgba(20,20,20,0.9); color: white; padding: 6px 12px; border-radius: 8px; border: 1px solid ${d.color}; white-space: nowrap; font-size: 14px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: opacity 0.2s, transform 0.2s; transform: translateY(5px);">
+              ${d.label} <span style="font-size: 12px; font-weight: normal; color: #ccc;">(${d.status})</span>
+            </div>
+            
+            <!-- 핀(점) 디자인 -->
+            <div style="width: 14px; height: 14px; background: ${d.color}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${d.color};"></div>
           </div>
-          
-          <!-- 핀(점) 디자인 -->
-          <div style="width: 14px; height: 14px; background: ${d.color}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${d.color};"></div>
-        </div>
-      `
+        `
+        
+        const container = el.querySelector('.marker-container')
+        const tooltip = el.querySelector('.marker-tooltip')
+        
+        el.onclick = () => router.push(`/hw6/weather/${d.id}`)
+        
+        el.onmouseenter = () => {
+          tooltip.style.opacity = '1'
+          tooltip.style.transform = 'translateY(0)'
+          el.style.zIndex = 1000 // 다른 마커 위로 올리기
+        }
+        
+        el.onmouseleave = () => {
+          tooltip.style.opacity = '0'
+          tooltip.style.transform = 'translateY(5px)'
+          el.style.zIndex = 1
+        }
+        
+        return el
+      })
       
-      const container = el.querySelector('.marker-container')
-      const tooltip = el.querySelector('.marker-tooltip')
-      
-      el.onclick = () => router.push(`/hw6/weather/${d.id}`)
-      
-      el.onmouseenter = () => {
-        tooltip.style.opacity = '1'
-        tooltip.style.transform = 'translateY(0)'
-        el.style.zIndex = 1000 // 다른 마커 위로 올리기
-      }
-      
-      el.onmouseleave = () => {
-        tooltip.style.opacity = '0'
-        tooltip.style.transform = 'translateY(5px)'
-        el.style.zIndex = 1
-      }
-      
-      return el
-    })
+    // 자동 회전 (거의 안 움직이게 매우 느리게 설정)
+    globeInstance.controls().autoRotate = true
+    globeInstance.controls().autoRotateSpeed = 0.05
+    // 마우스 스크롤을 통한 줌인/줌아웃 활성화
+    globeInstance.controls().enableZoom = true 
+    // 최소/최대 줌 거리 제한 (더 가까이 줌인 가능하게 변경)
+    globeInstance.controls().minDistance = 105
+    globeInstance.controls().maxDistance = 800
     
-  // 자동 회전 (거의 안 움직이게 매우 느리게 설정)
-  globeInstance.controls().autoRotate = true
-  globeInstance.controls().autoRotateSpeed = 0.05
-  // 마우스 스크롤을 통한 줌인/줌아웃 활성화
-  globeInstance.controls().enableZoom = true 
-  // 최소/최대 줌 거리 제한 (더 가까이 줌인 가능하게 변경)
-  globeInstance.controls().minDistance = 105
-  globeInstance.controls().maxDistance = 800
+    // 기본 카메라 위치 (지구 전체가 시야에 들어오도록 altitude 2.5 설정)
+    globeInstance.pointOfView({ lat: 37.5, lng: 127.0, altitude: 2.5 })
+  } catch (err) {
+    console.error('지구본(Globe.gl) 초기화 중 에러 발생:', err)
+  }
   
-  // 기본 카메라 위치 (지구 전체가 시야에 들어오도록 altitude 2.5 설정)
-  globeInstance.pointOfView({ lat: 37.5, lng: 127.0, altitude: 2.5 })
-
   // 전 세계 3D 국경선 (GeoJSON Polygon) 레이어 추가
   fetch('https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson')
     .then(res => res.json())
@@ -218,7 +227,13 @@ onMounted(() => {
     })
     .catch(err => console.error('국경선 데이터 로드 실패:', err))
 
-  window.addEventListener('resize', resizeGlobe)
+  let resizeObserver = new ResizeObserver(() => {
+    resizeGlobe()
+  })
+  resizeObserver.observe(globeContainer.value)
+  
+  // Clean up on unmount
+  globeInstance.resizeObserver = resizeObserver
 })
 
 watch(() => props.weatherList, () => {
@@ -228,7 +243,9 @@ watch(() => props.weatherList, () => {
 }, { deep: true })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeGlobe)
+  if (globeInstance && globeInstance.resizeObserver) {
+    globeInstance.resizeObserver.disconnect()
+  }
   if (globeInstance && globeContainer.value) {
     globeContainer.value.innerHTML = ''
   }
@@ -238,11 +255,17 @@ onUnmounted(() => {
 <template>
   <div class="globe-container-wrapper">
     <div class="globe-wrapper" ref="globeContainer"></div>
-    <div class="globe-legend">
-      <div class="legend-item"><span class="legend-color" style="background: #ff5252"></span> 25°C 이상 (더움)</div>
-      <div class="legend-item"><span class="legend-color" style="background: #67c23a"></span> 1°C ~ 24°C (보통)</div>
-      <div class="legend-item"><span class="legend-color" style="background: #409eff"></span> 0°C 이하 (추움)</div>
-      <div class="legend-item"><span class="legend-color" style="background: #f1c40f"></span> 🇰🇷 독도는 우리땅!</div>
+    <div class="globe-legend" :class="{ 'is-collapsed': !isLegendOpen }">
+      <div class="legend-header" @click="toggleLegend">
+        <span>🗺️ 범례</span>
+        <span class="legend-toggle-icon">{{ isLegendOpen ? '▼' : '▲' }}</span>
+      </div>
+      <div class="legend-content" v-show="isLegendOpen">
+        <div class="legend-item"><span class="legend-color" style="background: #ff5252"></span> 25°C 이상 (더움)</div>
+        <div class="legend-item"><span class="legend-color" style="background: #67c23a"></span> 1°C ~ 24°C (보통)</div>
+        <div class="legend-item"><span class="legend-color" style="background: #409eff"></span> 0°C 이하 (추움)</div>
+        <div class="legend-item"><span class="legend-color" style="background: #f1c40f"></span> 🇰🇷 독도는 우리땅!</div>
+      </div>
     </div>
   </div>
 </template>
@@ -267,12 +290,35 @@ onUnmounted(() => {
   bottom: 20px;
   right: 20px;
   background: rgba(255, 255, 255, 0.85);
-  padding: 10px 15px;
   border-radius: 8px;
   font-size: 13px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  pointer-events: none;
+  pointer-events: auto; /* changed from none to allow clicks */
   backdrop-filter: blur(4px);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+.legend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-weight: bold;
+  background: rgba(0, 0, 0, 0.05);
+  transition: background 0.2s;
+}
+.legend-header:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+.legend-content {
+  padding: 10px 15px 10px 15px;
+}
+.legend-toggle-icon {
+  margin-left: 10px;
+  font-size: 10px;
+  color: #909399;
 }
 .legend-item {
   display: flex;

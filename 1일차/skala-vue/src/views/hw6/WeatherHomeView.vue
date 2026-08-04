@@ -5,6 +5,7 @@ import BaseDashboardCard from '@/components/hw6/BaseDashboardCard.vue'
 import SearchBar from '@/components/hw6/SearchBar.vue'
 import WeatherCard from '@/components/hw6/WeatherCard.vue'
 import InteractiveGlobe from '@/components/hw6/InteractiveGlobe.vue'
+import AISmartBriefing from '@/components/hw6/AISmartBriefing.vue'
 import { matchKorean } from '@/utils/koreanSearch.js'
 import { useHw6FavoriteStore } from '@/stores/hw6FavoriteStore'
 import { useHw6WeatherStore } from '@/stores/hw6WeatherStore'
@@ -96,7 +97,15 @@ const handleAddCity = async () => {
 const myLocationWeather = ref(null)
 const myLocationLoading = ref(false)
 
+const debugState = ref({
+  mountedStarted: false,
+  fetchWeatherCalled: false,
+  fetchWeatherFinished: false,
+  errorThrown: null
+})
+
 onMounted(async () => {
+  debugState.value.mountedStarted = true
   const historyData = localStorage.getItem('hw6_history')
   if (historyData) {
     try {
@@ -174,8 +183,13 @@ onMounted(async () => {
     )
   }
 
-  // API Fetch
-  await weatherStore.fetchWeather()
+  try {
+    debugState.value.fetchWeatherCalled = true
+    await weatherStore.fetchWeather()
+    debugState.value.fetchWeatherFinished = true
+  } catch (err) {
+    debugState.value.errorThrown = err.message
+  }
 })
 
 watch(searchQuery, (newVal) => {
@@ -217,28 +231,33 @@ const handleUpdateQuery = (newQuery) => {
 
 <template>
   <div class="weather-container">
-    <div class="globe-section">
-      <InteractiveGlobe :weatherList="weatherStore.weatherList" ref="globeRef" />
-      <div class="globe-action-buttons">
-        <el-button 
-          v-for="loc in presetLocations" 
-          :key="loc.name" 
-          :type="activeContinent === loc.continent ? loc.type : 'default'" 
-          size="small" 
-          round
-          :class="{ 'active-continent-btn': activeContinent === loc.continent }"
-          @click="focusPreset(loc)"
-        >
-          {{ loc.name }}
-        </el-button>
-        <el-button type="info" size="small" round @click="resetGlobe">
-          🌍 전체
-        </el-button>
+    <div class="globe-layout">
+      <div class="globe-section">
+        <InteractiveGlobe :weatherList="weatherStore.weatherList" ref="globeRef" />
+        <div class="globe-action-buttons">
+          <el-button 
+            v-for="loc in presetLocations" 
+            :key="loc.name" 
+            :type="activeContinent === loc.continent ? loc.type : 'default'" 
+            size="small" 
+            round
+            :class="{ 'active-continent-btn': activeContinent === loc.continent }"
+            @click="focusPreset(loc)"
+          >
+            {{ loc.name }}
+          </el-button>
+          <el-button type="info" size="small" round @click="resetGlobe">
+            🌍 전체
+          </el-button>
+        </div>
+      </div>
+      <div class="globe-side-briefing">
+        <AISmartBriefing :weatherList="weatherStore.weatherList" style="height: 100%; margin-bottom: 0;" />
       </div>
     </div>
     
     <div class="main-layout">
-      <!-- 사이드바 -->
+      <!-- 사이드바: 모든 컨트롤(내 위치, 즐겨찾기, 추가, 검색) -->
       <aside class="sidebar">
 
         <!-- 📍 내 위치 날씨 (컴팩트 세로형) -->
@@ -259,11 +278,10 @@ const handleUpdateQuery = (newQuery) => {
             <div class="loc-detail-item"><span>💨</span>{{ myLocationWeather.wind }}m/s</div>
           </div>
         </div>
-
         <div class="status-widgets">
           <!-- ⭐ 즐겨찾기 -->
           <div v-if="favoriteStore.favorites.length > 0" class="widget-box favorite-box">
-            <span class="widget-label">⭐ 즐겨찾기</span>
+            <span class="widget-label">⭐ 내 즐겨찾기</span>
             <div class="tag-list">
               <el-tag 
                 v-for="city in favoriteStore.favorites" 
@@ -279,10 +297,10 @@ const handleUpdateQuery = (newQuery) => {
             </div>
           </div>
 
-          <!-- 🕒 최근 본 지역 -->
-          <div v-if="recentCities.length > 0" class="widget-box recent-box">
-            <span class="widget-label">🕒 최근 본 지역</span>
-            <div class="tag-list">
+          <!-- 🕒 최근 본 지역 (검색 기록) -->
+          <div class="widget-box recent-box">
+            <span class="widget-label">🕒 검색 기록 (최근 본 지역)</span>
+            <div v-if="recentCities.length > 0" class="tag-list">
               <el-tag 
                 v-for="city in recentCities" 
                 :key="city.id" 
@@ -295,58 +313,54 @@ const handleUpdateQuery = (newQuery) => {
                 {{ city.name }}
               </el-tag>
             </div>
+            <div v-else style="font-size: 13px; color: #888; margin-top: 10px;">
+              검색 기록이 없습니다.
+            </div>
           </div>
         </div>
+
+        <BaseDashboardCard title="➕ 새로운 도시 추가 (API 연동)" class="mb-card">
+          <div class="add-city-group">
+            <el-input
+              v-model="newCityName"
+              placeholder="도시 영문명 (예: osaka, beijing)"
+              @keyup.enter="handleAddCity"
+              clearable
+            >
+              <template #append>
+                <el-button @click="handleAddCity" :loading="weatherStore.isAdding">
+                  추가
+                </el-button>
+              </template>
+            </el-input>
+          </div>
+        </BaseDashboardCard>
       </aside>
 
-      <!-- 메인 콘텐츠 영역 -->
+      <!-- 메인 콘텐츠 영역 (결과만 표시) -->
       <main class="main-content">
-        <!-- 검색 + 정렬 인라인 바 -->
-        <div class="search-sort-bar">
-          <div class="search-bar-inline">
+        <!-- 지역별 날씨 현황 & 대시보드 내 검색 (세트 구성) -->
+        <BaseDashboardCard title="🗺️ 지역별 날씨 현황" class="mb-card main-weather-card">
+          
+          <!-- 검색 및 정렬 영역 -->
+          <div class="search-sort-section">
             <SearchBar
               :search-query="searchQuery"
               @update-query="handleUpdateQuery"
               @is-searching="isSearching = $event"
             />
-          </div>
-          <el-radio-group v-model="sortOrder" size="small" class="sort-radio">
-            <el-radio-button value="default">기본</el-radio-button>
-            <el-radio-button value="desc">🔺 높은 순</el-radio-button>
-            <el-radio-button value="asc">🔻 낮은 순</el-radio-button>
-          </el-radio-group>
-        </div>
-
-        <!-- 도시 추가 인라인 바 -->
-        <div class="add-city-bar">
-          <span class="add-city-label">➕</span>
-          <el-input
-            v-model="newCityName"
-            placeholder="도시 영문명으로 추가 (예: osaka, delhi)"
-            @keyup.enter="handleAddCity"
-            clearable
-            size="small"
-            class="add-city-input"
-          >
-            <template #append>
-              <el-button @click="handleAddCity" :loading="weatherStore.isAdding" size="small">
-                추가
-              </el-button>
-            </template>
-          </el-input>
-        </div>
-
-        <BaseDashboardCard class="region-card">
-          <template #title>
-            <div class="region-title-row">
-              <span>🗺️ 지역별 날씨 현황</span>
-              <span v-if="activeContinent" class="continent-badge">
-                {{ presetLocations.find(p => p.continent === activeContinent)?.name || activeContinent }}
-                <el-button size="small" type="info" text @click="activeContinent = null; resetGlobe()">✕ 전체</el-button>
-              </span>
-              <span v-else class="city-count-badge">{{ filteredWeatherList.length }}개 도시</span>
+            <div class="sort-group">
+              <el-radio-group v-model="sortOrder" size="small">
+                <el-radio-button value="default">기본</el-radio-button>
+                <el-radio-button value="desc">온도 높은 순</el-radio-button>
+                <el-radio-button value="asc">온도 낮은 순</el-radio-button>
+              </el-radio-group>
             </div>
-          </template>
+          </div>
+          
+          <div class="divider"></div>
+
+          <!-- 리스트 상태 표시 -->
           <div v-if="weatherStore.isLoading" class="skeleton-wrapper">
             <el-skeleton :rows="3" animated />
             <br />
@@ -386,7 +400,7 @@ const handleUpdateQuery = (newQuery) => {
 
 <style scoped>
 .weather-container {
-  max-width: 900px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 .main-layout {
@@ -411,7 +425,7 @@ const handleUpdateQuery = (newQuery) => {
 }
 .main-content {
   flex-grow: 1;
-  max-width: 560px;
+  min-width: 0;
 }
 .mb-card {
   margin-bottom: 15px;
@@ -425,11 +439,13 @@ const handleUpdateQuery = (newQuery) => {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
-  background-color: white;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  gap: 12px;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.03);
 }
 .tag-list {
   display: flex;
@@ -457,17 +473,40 @@ const handleUpdateQuery = (newQuery) => {
 }
 .sort-group {
   margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px dashed #eee;
   display: flex;
   justify-content: center;
+}
+.search-sort-section {
+  padding-bottom: 5px;
+}
+.divider {
+  height: 1px;
+  background-color: #ebeef5;
+  margin: 15px 0;
 }
 .no-result-alert {
   margin-bottom: 20px;
 }
-.globe-section {
+.globe-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: stretch;
   margin-bottom: 20px;
+}
+.globe-section {
   position: relative;
+  min-width: 0;
+}
+.globe-side-briefing {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .globe-layout {
+    flex-direction: column;
+  }
 }
 .globe-action-buttons {
   display: flex;
@@ -529,28 +568,45 @@ const handleUpdateQuery = (newQuery) => {
   color: white !important;
 }
 
-/* 날씨 카드 내부 스크롤 */
+/* 날씨 카드 내부 스크롤 (레이아웃 점프 방지 및 프리미엄 그리드) */
 .weather-scroll-container {
-  max-height: 520px;
+  min-height: 520px;
+  max-height: 650px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 8px;
+  padding-bottom: 20px;
   scrollbar-width: thin;
   scrollbar-color: #dcdfe6 transparent;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  align-items: start;
 }
 .weather-scroll-container::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
 .weather-scroll-container::-webkit-scrollbar-thumb {
-  background-color: #dcdfe6;
+  background-color: #c0c4cc;
   border-radius: 4px;
 }
 
 /* 내 위치 날씨 (컴팩트 세로형) */
 .my-location-box {
-  background: linear-gradient(160deg, #0f0c29, #302b63, #24243e);
-  border: none;
-  gap: 6px;
-  padding: 14px;
+  background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 16px;
+  gap: 8px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.my-location-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #f39c12, #e74c3c);
 }
 .location-loading-box { padding: 14px; }
 .loc-top {

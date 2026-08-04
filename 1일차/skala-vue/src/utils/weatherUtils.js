@@ -122,6 +122,7 @@ export function getKoreanCityName(englishName) {
     'vienna': '빈',
     'prague': '프라하',
     'sofia': '소피아',
+    'budapest': '부다페스트',
     // 북미
     'new york': '뉴욕',
     'los angeles': '로스앤젤레스',
@@ -132,6 +133,8 @@ export function getKoreanCityName(englishName) {
     'san francisco': '샌프란시스코',
     // 남미
     'sao paulo': '상파울루',
+    'são paulo': '상파울루',
+    'state of são paulo': '상파울루',
     'buenos aires': '부에노스아이레스',
     'lima': '리마',
     'bogota': '보고타',
