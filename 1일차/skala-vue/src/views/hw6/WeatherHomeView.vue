@@ -22,30 +22,86 @@ const globeRef = ref(null)
 
 // 대륙별 도시 분류 (국적/위치 기반) - 각 3~4개씩
 const continentCityMap = {
-  '아시아': ['Seoul', 'Suwon', 'Busan', 'Jeju', 'Ulleungdo', 'Dokdo',
-             'Tokyo', 'Osaka', 'Beijing', 'Bangkok', 'Shanghai', 'Hanoi',
-             'Almaty', 'Delhi', 'Mumbai', 'Kuala Lumpur', 'Chiang Mai'],
-  '유럽':   ['London', 'Paris', 'Berlin', 'Rome,IT', 'Amsterdam',
-             'Madrid', 'Vienna', 'Prague', 'Sofia'],
-  '북미':   ['New York', 'Los Angeles', 'Chicago', 'Toronto',
-             'Vancouver', 'Houston', 'San Francisco'],
-  '남미':   ['Sao Paulo', 'Buenos Aires', 'Lima', 'Bogota', 'Medellin', 'Santiago'],
-  '아프리카': ['Cairo', 'Lagos', 'Nairobi', 'Johannesburg',
-              'Cape Town', 'Kampala', 'Luanda'],
-  '오세아니아': ['Sydney', 'Melbourne,AU', 'Auckland', 'Brisbane']
+  대한민국: [
+    'Seoul',
+    'Suwon',
+    'Busan',
+    'Jeju',
+    'Ulleungdo',
+    'Dokdo',
+    'Incheon',
+    'Daegu',
+    'Daejeon',
+  ],
+  아시아: [
+    'Tokyo',
+    'Osaka',
+    'Beijing',
+    'Bangkok',
+    'Shanghai',
+    'Hanoi',
+    'Almaty',
+    'Delhi',
+    'Mumbai',
+    'Kuala Lumpur',
+    'Chiang Mai',
+    'Seoul',
+    'Suwon',
+    'Busan',
+    'Jeju',
+    'Ulleungdo',
+    'Dokdo',
+  ],
+  유럽: [
+    'London',
+    'Paris',
+    'Berlin',
+    'Rome,IT',
+    'Amsterdam',
+    'Madrid',
+    'Vienna',
+    'Prague',
+    'Sofia',
+    'Budapest',
+  ],
+  북미: ['New York', 'Los Angeles', 'Chicago', 'Toronto', 'Vancouver', 'Houston', 'San Francisco'],
+  남미: ['Sao Paulo', 'Buenos Aires', 'Lima', 'Bogota', 'Medellin', 'Santiago'],
+  아프리카: ['Cairo', 'Lagos', 'Nairobi', 'Johannesburg', 'Cape Town', 'Kampala', 'Luanda'],
+  오세아니아: ['Sydney', 'Melbourne,AU', 'Auckland', 'Brisbane'],
 }
 
 const activeContinent = ref(null)
 
 // 대륙별 및 주요 지역 포커싱 좌표 사전
 const presetLocations = [
-  { name: '🇰🇷 대한민국', lat: 36.0, lng: 127.5, altitude: 0.15, type: 'primary', continent: '아시아' },
+  {
+    name: '🇰🇷 대한민국',
+    lat: 36.0,
+    lng: 127.5,
+    altitude: 0.15,
+    type: 'primary',
+    continent: '대한민국',
+  },
   { name: '🌏 아시아', lat: 34.0, lng: 100.0, altitude: 1.5, type: 'warning', continent: '아시아' },
   { name: '🏰 유럽', lat: 54.0, lng: 15.0, altitude: 1.2, type: 'danger', continent: '유럽' },
   { name: '🗽 북미', lat: 40.0, lng: -100.0, altitude: 1.5, type: 'success', continent: '북미' },
   { name: '💃 남미', lat: -15.0, lng: -60.0, altitude: 1.5, type: 'warning', continent: '남미' },
-  { name: '🦁 아프리카', lat: 0.0, lng: 20.0, altitude: 1.5, type: 'danger', continent: '아프리카' },
-  { name: '🦘 오세아니아', lat: -25.0, lng: 135.0, altitude: 1.5, type: 'primary', continent: '오세아니아' }
+  {
+    name: '🦁 아프리카',
+    lat: 0.0,
+    lng: 20.0,
+    altitude: 1.5,
+    type: 'danger',
+    continent: '아프리카',
+  },
+  {
+    name: '🦘 오세아니아',
+    lat: -25.0,
+    lng: 135.0,
+    altitude: 1.5,
+    type: 'primary',
+    continent: '오세아니아',
+  },
 ]
 
 const focusPreset = (location) => {
@@ -78,7 +134,7 @@ const focusMyLocation = () => {
     (err) => {
       console.error(err)
       alert('위치 정보를 가져올 수 없습니다. 브라우저 위치 권한을 확인해주세요.')
-    }
+    },
   )
 }
 
@@ -101,7 +157,7 @@ const debugState = ref({
   mountedStarted: false,
   fetchWeatherCalled: false,
   fetchWeatherFinished: false,
-  errorThrown: null
+  errorThrown: null,
 })
 
 onMounted(async () => {
@@ -111,10 +167,13 @@ onMounted(async () => {
     try {
       const rawList = JSON.parse(historyData)
       const map = new Map()
-      rawList.forEach(item => {
+      rawList.forEach((item) => {
         if (item && (item.id || item.name)) {
           const cleanId = (item.id || item.name).toString().replace(/-si$/i, '')
-          const cleanName = getKoreanCityName(cleanId) || getKoreanCityName(item.name) || item.name.replace(/(특별|광역|특례)?시$/, '')
+          const cleanName =
+            getKoreanCityName(cleanId) ||
+            getKoreanCityName(item.name) ||
+            item.name.replace(/(특별|광역|특례)?시$/, '')
           map.set(cleanName, { id: cleanId, name: cleanName })
         }
       })
@@ -124,7 +183,7 @@ onMounted(async () => {
       recentCities.value = []
     }
   }
-  
+
   // 접속 시 내 위치 자동 감지 후 날씨 로드
   if (navigator.geolocation) {
     myLocationLoading.value = true
@@ -136,14 +195,14 @@ onMounted(async () => {
           if (apiKey) {
             const axios = (await import('axios')).default
             const res = await axios.get(
-              `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric&lang=kr`
+              `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric&lang=kr`,
             )
             const d = res.data
             // 2. 역지오코딩으로 정확한 한글 동네/도시 이름 가져오기
             let localKoreanName = ''
             try {
               const geoRes = await axios.get(
-                `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${apiKey}`
+                `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${apiKey}`,
               )
               if (geoRes.data && geoRes.data.length > 0) {
                 const localNames = geoRes.data[0].local_names
@@ -165,7 +224,7 @@ onMounted(async () => {
               status: d.weather[0].description,
               icon: `https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png`,
               lat: latitude,
-              lon: longitude
+              lon: longitude,
             }
             // 지구본을 내 위치로 포커싱
             if (globeRef.value?.focusOnLocation) {
@@ -178,8 +237,10 @@ onMounted(async () => {
           myLocationLoading.value = false
         }
       },
-      () => { myLocationLoading.value = false },
-      { timeout: 5000 }
+      () => {
+        myLocationLoading.value = false
+      },
+      { timeout: 5000 },
     )
   }
 
@@ -201,20 +262,31 @@ const filteredWeatherList = computed(() => {
 
   // 대륙 필터링 (대륙 버튼 클릭 시)
   if (activeContinent.value && continentCityMap[activeContinent.value]) {
-    const continentCities = continentCityMap[activeContinent.value].map(c => c.toLowerCase().replace(/-si$/i, ''))
-    result = result.filter(city => {
-      const cityId = (city.id || '').toString().toLowerCase().replace(/-si$/i, '').replace(/\s/g, '-')
+    const continentCities = continentCityMap[activeContinent.value].map((c) =>
+      c.toLowerCase().replace(/-si$/i, ''),
+    )
+    result = result.filter((city) => {
+      const cityId = (city.id || '')
+        .toString()
+        .toLowerCase()
+        .replace(/-si$/i, '')
+        .replace(/\s/g, '-')
       const cityIdSpace = (city.id || '').toString().toLowerCase().replace(/-si$/i, '')
       const cityQueryName = (city.queryName || '').toString().toLowerCase().replace(/-si$/i, '')
-      return continentCities.some(cc => {
+      return continentCities.some((cc) => {
         const ccNorm = cc.replace(/\s/g, '-')
-        return cityId === ccNorm || cityIdSpace === cc || cityQueryName === cc || cityQueryName === ccNorm
+        return (
+          cityId === ccNorm ||
+          cityIdSpace === cc ||
+          cityQueryName === cc ||
+          cityQueryName === ccNorm
+        )
       })
     })
   }
 
   if (searchQuery.value) {
-    result = result.filter(city => matchKorean(city.name, searchQuery.value))
+    result = result.filter((city) => matchKorean(city.name, searchQuery.value))
   }
   if (sortOrder.value === 'desc') {
     result = [...result].sort((a, b) => b.temp - a.temp)
@@ -235,31 +307,31 @@ const handleUpdateQuery = (newQuery) => {
       <div class="globe-section">
         <InteractiveGlobe :weatherList="weatherStore.weatherList" ref="globeRef" />
         <div class="globe-action-buttons">
-          <el-button 
-            v-for="loc in presetLocations" 
-            :key="loc.name" 
-            :type="activeContinent === loc.continent ? loc.type : 'default'" 
-            size="small" 
+          <el-button
+            v-for="loc in presetLocations"
+            :key="loc.name"
+            :type="activeContinent === loc.continent ? loc.type : 'default'"
+            size="small"
             round
             :class="{ 'active-continent-btn': activeContinent === loc.continent }"
             @click="focusPreset(loc)"
           >
             {{ loc.name }}
           </el-button>
-          <el-button type="info" size="small" round @click="resetGlobe">
-            🌍 전체
-          </el-button>
+          <el-button type="info" size="small" round @click="resetGlobe"> 🌍 전체 </el-button>
         </div>
       </div>
       <div class="globe-side-briefing">
-        <AISmartBriefing :weatherList="weatherStore.weatherList" style="height: 100%; margin-bottom: 0;" />
+        <AISmartBriefing
+          :weatherList="weatherStore.weatherList"
+          style="height: 100%; margin-bottom: 0"
+        />
       </div>
     </div>
-    
+
     <div class="main-layout">
       <!-- 사이드바: 모든 컨트롤(내 위치, 즐겨찾기, 추가, 검색) -->
       <aside class="sidebar">
-
         <!-- 📍 내 위치 날씨 (컴팩트 세로형) -->
         <div v-if="myLocationLoading" class="widget-box location-loading-box">
           <el-skeleton :rows="3" animated />
@@ -283,10 +355,10 @@ const handleUpdateQuery = (newQuery) => {
           <div v-if="favoriteStore.favorites.length > 0" class="widget-box favorite-box">
             <span class="widget-label">⭐ 내 즐겨찾기</span>
             <div class="tag-list">
-              <el-tag 
-                v-for="city in favoriteStore.favorites" 
-                :key="city.id" 
-                class="widget-tag" 
+              <el-tag
+                v-for="city in favoriteStore.favorites"
+                :key="city.id"
+                class="widget-tag"
                 type="warning"
                 effect="light"
                 round
@@ -301,19 +373,19 @@ const handleUpdateQuery = (newQuery) => {
           <div class="widget-box recent-box">
             <span class="widget-label">🕒 검색 기록 (최근 본 지역)</span>
             <div v-if="recentCities.length > 0" class="tag-list">
-              <el-tag 
-                v-for="city in recentCities" 
-                :key="city.id" 
-                class="widget-tag" 
-                size="small" 
-                effect="plain" 
+              <el-tag
+                v-for="city in recentCities"
+                :key="city.id"
+                class="widget-tag"
+                size="small"
+                effect="plain"
                 round
                 @click="router.push(`/hw6/weather/${city.id}`)"
               >
                 {{ city.name }}
               </el-tag>
             </div>
-            <div v-else style="font-size: 13px; color: #888; margin-top: 10px;">
+            <div v-else style="font-size: 13px; color: #888; margin-top: 10px">
               검색 기록이 없습니다.
             </div>
           </div>
@@ -341,7 +413,6 @@ const handleUpdateQuery = (newQuery) => {
       <main class="main-content">
         <!-- 지역별 날씨 현황 & 대시보드 내 검색 (세트 구성) -->
         <BaseDashboardCard title="🗺️ 지역별 날씨 현황" class="mb-card main-weather-card">
-          
           <!-- 검색 및 정렬 영역 -->
           <div class="search-sort-section">
             <SearchBar
@@ -357,7 +428,7 @@ const handleUpdateQuery = (newQuery) => {
               </el-radio-group>
             </div>
           </div>
-          
+
           <div class="divider"></div>
 
           <!-- 리스트 상태 표시 -->
@@ -366,31 +437,27 @@ const handleUpdateQuery = (newQuery) => {
             <br />
             <el-skeleton :rows="3" animated />
           </div>
-          
-          <el-alert 
-            v-else-if="weatherStore.error" 
-            :title="weatherStore.error" 
-            type="error" 
+
+          <el-alert
+            v-else-if="weatherStore.error"
+            :title="weatherStore.error"
+            type="error"
             show-icon
             class="no-result-alert"
           />
 
-          <el-alert 
-            v-else-if="filteredWeatherList.length === 0" 
-            :title="isSearching ? '🔍 날씨 데이터를 검색 중입니다...' : '검색 결과가 없습니다.'" 
-            :type="isSearching ? 'info' : 'warning'" 
-            :closable="false" 
+          <el-alert
+            v-else-if="filteredWeatherList.length === 0"
+            :title="isSearching ? '🔍 날씨 데이터를 검색 중입니다...' : '검색 결과가 없습니다.'"
+            :type="isSearching ? 'info' : 'warning'"
+            :closable="false"
             show-icon
             class="no-result-alert"
           />
-          
+
           <!-- 내부 스크롤 컨테이너 -->
           <div v-else class="weather-scroll-container">
-            <WeatherCard
-              v-for="city in filteredWeatherList"
-              :key="city.id"
-              :city="city"
-            />
+            <WeatherCard v-for="city in filteredWeatherList" :key="city.id" :city="city" />
           </div>
         </BaseDashboardCard>
       </main>
@@ -529,7 +596,7 @@ const handleUpdateQuery = (newQuery) => {
   background: white;
   padding: 10px 14px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .search-bar-inline {
   flex: 1;
@@ -559,7 +626,7 @@ const handleUpdateQuery = (newQuery) => {
   white-space: nowrap;
 }
 .continent-badge .el-button {
-  color: rgba(255,255,255,0.85) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
   font-size: 11px;
   padding: 0;
   height: auto;
@@ -604,28 +671,34 @@ const handleUpdateQuery = (newQuery) => {
 .my-location-box::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 2px;
   background: linear-gradient(90deg, #f39c12, #e74c3c);
 }
-.location-loading-box { padding: 14px; }
+.location-loading-box {
+  padding: 14px;
+}
 .loc-top {
   display: flex;
   align-items: center;
   gap: 6px;
   width: 100%;
 }
-.loc-pin { font-size: 14px; }
+.loc-pin {
+  font-size: 14px;
+}
 .loc-label {
   font-size: 10px;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.5px;
   flex: 1;
 }
 .loc-icon {
   width: 36px;
   height: 36px;
-  filter: drop-shadow(0 0 5px rgba(255,255,255,0.35));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.35));
 }
 .loc-city {
   font-size: 16px;
@@ -646,7 +719,7 @@ const handleUpdateQuery = (newQuery) => {
 }
 .loc-status {
   font-size: 12px;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255, 255, 255, 0.65);
 }
 .loc-details {
   display: flex;
@@ -658,7 +731,7 @@ const handleUpdateQuery = (newQuery) => {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 /* 도시 추가 인라인 바 */
@@ -670,7 +743,7 @@ const handleUpdateQuery = (newQuery) => {
   background: white;
   padding: 8px 12px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .add-city-label {
   font-size: 14px;

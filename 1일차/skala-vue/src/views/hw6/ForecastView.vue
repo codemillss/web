@@ -16,7 +16,7 @@ onMounted(async () => {
   if (weatherStore.weatherList.length === 0) {
     await weatherStore.fetchWeather()
   }
-  
+
   // 기본 선택: 최근 본 도시(hw6_history)가 있으면 그것으로, 없으면 첫 번째 도시
   if (weatherStore.weatherList.length > 0) {
     let defaultId = weatherStore.weatherList[0].id
@@ -26,7 +26,7 @@ onMounted(async () => {
         const historyList = JSON.parse(historyData)
         if (historyList.length > 0) {
           const recentId = historyList[0].id
-          const found = weatherStore.weatherList.find(c => c.id === recentId)
+          const found = weatherStore.weatherList.find((c) => c.id === recentId)
           if (found) defaultId = found.id
         }
       }
@@ -38,29 +38,29 @@ onMounted(async () => {
 // 도시가 선택되면 5-Day API 호출
 watch(selectedCityId, async (newId) => {
   if (!newId) return
-  
-  const targetCity = weatherStore.weatherList.find(c => c.id === newId)
+
+  const targetCity = weatherStore.weatherList.find((c) => c.id === newId)
   if (!targetCity || !targetCity.lat || !targetCity.lon) {
     ElMessage.warning('해당 도시의 좌표 정보를 찾을 수 없습니다.')
     return
   }
-  
+
   isLoading.value = true
   forecastData.value = null
   try {
     const data = await weatherStore.fetchForecast(targetCity.lat, targetCity.lon, targetCity.name)
     // 3시간 간격 데이터(40개)를 날짜별로 그룹화
     const grouped = {}
-    data.list.forEach(item => {
+    data.list.forEach((item) => {
       const date = item.dt_txt.split(' ')[0]
       if (!grouped[date]) grouped[date] = []
       grouped[date].push(item)
     })
-    
+
     forecastData.value = {
       city: data.city,
       cityName: targetCity.name || getKoreanCityName(data.city.name) || data.city.name,
-      daily: grouped
+      daily: grouped,
     }
   } catch (err) {
     ElMessage.error('주간 예보 데이터를 불러오는 데 실패했습니다.')
@@ -95,10 +95,16 @@ const getDayName = (dateStr) => {
       <div v-if="isLoading" class="loading-area">
         <el-skeleton :rows="5" animated />
       </div>
-      
+
       <div v-else-if="forecastData" class="forecast-content">
         <div class="city-header">
-          <h3>{{ forecastData.cityName || getKoreanCityName(forecastData.city.name) || forecastData.city.name }}의 주간 예보</h3>
+          <h3>
+            {{
+              forecastData.cityName ||
+              getKoreanCityName(forecastData.city.name) ||
+              forecastData.city.name
+            }}의 주간 예보
+          </h3>
           <p class="subtitle">3시간 간격의 기온 및 날씨 변화</p>
         </div>
 
@@ -111,15 +117,24 @@ const getDayName = (dateStr) => {
             <div class="times-scroller">
               <div v-for="time in times" :key="time.dt" class="time-slot">
                 <div class="time-label">{{ time.dt_txt.split(' ')[1].substring(0, 5) }}</div>
-                <img :src="`http://openweathermap.org/img/wn/${time.weather[0].icon}.png`" :alt="time.weather[0].description" class="weather-icon" />
+                <img
+                  :src="`http://openweathermap.org/img/wn/${time.weather[0].icon}.png`"
+                  :alt="time.weather[0].description"
+                  class="weather-icon"
+                />
                 <div class="temp">{{ Math.round(time.main.temp) }}°</div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
-      <el-alert v-else-if="!isLoading && !selectedCityName" title="상단에서 도시를 선택해 주세요." type="info" :closable="false" />
+
+      <el-alert
+        v-else-if="!isLoading && !selectedCityName"
+        title="상단에서 도시를 선택해 주세요."
+        type="info"
+        :closable="false"
+      />
     </BaseDashboardCard>
   </div>
 </template>
@@ -168,7 +183,7 @@ const getDayName = (dateStr) => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 .day-header {
   font-weight: bold;
@@ -210,7 +225,7 @@ const getDayName = (dateStr) => {
 .weather-icon {
   width: 50px;
   height: 50px;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
 }
 .temp {
   font-weight: bold;

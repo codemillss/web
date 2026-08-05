@@ -14,8 +14,22 @@ defineProps({ title: { type: String, default: '' } })
   </el-card>
 </template>
 <style scoped>
-.dashboard-card { margin-bottom: 20px; border-radius: 8px; }
-.card-header { display: flex; align-items: center; width: 100%; }
-.card-title { margin: 0; font-size: 16px; color: #333; width: 100%; }
-.card-content { padding: 10px 0; }
+.dashboard-card {
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.card-title {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+  width: 100%;
+}
+.card-content {
+  padding: 10px 0;
+}
 </style>

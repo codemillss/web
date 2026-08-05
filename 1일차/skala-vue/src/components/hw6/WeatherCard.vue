@@ -5,12 +5,13 @@ import { useConfigStore } from '@/stores/configStore'
 import { useHw6FavoriteStore } from '@/stores/hw6FavoriteStore'
 import { useHw6WeatherStore } from '@/stores/hw6WeatherStore'
 import { getWeatherTags } from '@/utils/weatherUtils'
+import { hasTravelData } from '@/utils/travelData'
 
 const props = defineProps({
   city: {
     type: Object,
-    required: true
-  }
+    required: true,
+  },
 })
 
 const emit = defineEmits(['select-card'])
@@ -28,7 +29,7 @@ const displayTemp = computed(() => {
 })
 
 const onClickCard = () => {
-  emit('select-card', props.city.name)
+  router.push('/hw6/weather/' + props.city.id)
 }
 
 const onClickDetail = () => {
@@ -51,16 +52,16 @@ const toggleFav = () => {
           <span class="city-status">{{ city.status }}</span>
         </div>
         <div class="card-icons">
-          <span 
-            class="fav-icon" 
+          <span
+            class="fav-icon"
             :class="{ active: favoriteStore.isFavorite(city.id) }"
             @click.stop="toggleFav"
             title="즐겨찾기 토글"
           >
             {{ favoriteStore.isFavorite(city.id) ? '⭐' : '☆' }}
           </span>
-          <span 
-            class="delete-icon" 
+          <span
+            class="delete-icon"
             @click.stop="weatherStore.removeCity(city.id)"
             title="도시 삭제"
           >
@@ -68,7 +69,7 @@ const toggleFav = () => {
           </span>
         </div>
       </div>
-      
+
       <div class="card-body">
         <div class="temp-display">
           <img v-if="city.icon" :src="city.icon" class="weather-icon-large" alt="날씨 아이콘" />
@@ -76,13 +77,23 @@ const toggleFav = () => {
             {{ displayTemp }}<span class="unit">{{ configStore.unitSymbol }}</span>
           </div>
         </div>
-        
+
         <div class="tags-container">
-          <el-tag 
-            v-for="(tag, index) in getWeatherTags(city)" 
-            :key="index" 
-            :type="tag.type" 
-            effect="dark" 
+          <el-tag
+            v-if="hasTravelData(city.name) || hasTravelData(city.id)"
+            type="warning"
+            effect="dark"
+            size="small"
+            class="insight-tag travel-tag"
+            round
+          >
+            ✈️ 여행 코스 추천
+          </el-tag>
+          <el-tag
+            v-for="(tag, index) in getWeatherTags(city)"
+            :key="index"
+            :type="tag.type"
+            effect="dark"
             size="small"
             class="insight-tag"
             round
@@ -93,8 +104,15 @@ const toggleFav = () => {
       </div>
 
       <div class="card-footer">
-        <el-button type="primary" size="small" round plain @click.stop="onClickDetail" class="detail-btn">
-          상세보기
+        <el-button
+          type="primary"
+          size="small"
+          round
+          plain
+          @click.stop="onClickDetail"
+          class="detail-btn"
+        >
+          상세보기 →
         </el-button>
       </div>
     </div>
@@ -124,7 +142,9 @@ const toggleFav = () => {
 }
 .card-glow {
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 4px;
   background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
   opacity: 0.7;
@@ -168,15 +188,27 @@ const toggleFav = () => {
   gap: 8px;
   align-items: center;
 }
-.fav-icon, .delete-icon {
+.fav-icon,
+.delete-icon {
   cursor: pointer;
   font-size: 16px;
   color: #c0c4cc;
-  transition: transform 0.2s, filter 0.2s;
+  transition:
+    transform 0.2s,
+    filter 0.2s;
 }
-.fav-icon:hover, .delete-icon:hover { transform: scale(1.15); filter: brightness(0.9); }
-.fav-icon.active { color: #f1c40f; text-shadow: 0 0 5px rgba(241, 196, 15, 0.5); }
-.delete-icon { font-size: 13px; }
+.fav-icon:hover,
+.delete-icon:hover {
+  transform: scale(1.15);
+  filter: brightness(0.9);
+}
+.fav-icon.active {
+  color: #f1c40f;
+  text-shadow: 0 0 5px rgba(241, 196, 15, 0.5);
+}
+.delete-icon {
+  font-size: 13px;
+}
 
 .card-body {
   display: flex;
@@ -193,7 +225,7 @@ const toggleFav = () => {
   width: 48px;
   height: 48px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 .temp-text {
   font-size: 32px;
@@ -219,7 +251,24 @@ const toggleFav = () => {
 .insight-tag {
   font-weight: 600;
   letter-spacing: -0.3px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+.travel-tag {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  border: none;
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(243, 156, 18, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(243, 156, 18, 0);
+  }
 }
 
 .card-footer {
@@ -230,5 +279,11 @@ const toggleFav = () => {
 .detail-btn {
   font-weight: 600;
   width: 100%;
+  transition: all 0.25s ease;
+  letter-spacing: 0.5px;
+}
+.detail-btn:hover {
+  letter-spacing: 1.5px;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
 </style>

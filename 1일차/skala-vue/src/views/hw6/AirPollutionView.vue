@@ -16,14 +16,14 @@ const aqiMap = {
   2: { label: '보통 (Fair)', color: '#f39c12', bg: '#fef5e7', icon: '🙂' },
   3: { label: '관심 (Moderate)', color: '#d35400', bg: '#fdf2e9', icon: '😐' },
   4: { label: '나쁨 (Poor)', color: '#e74c3c', bg: '#fdedec', icon: '😷' },
-  5: { label: '매우 나쁨 (Very Poor)', color: '#c0392b', bg: '#f9ebea', icon: '🤢' }
+  5: { label: '매우 나쁨 (Very Poor)', color: '#c0392b', bg: '#f9ebea', icon: '🤢' },
 }
 
 onMounted(async () => {
   if (weatherStore.weatherList.length === 0) {
     await weatherStore.fetchWeather()
   }
-  
+
   // 기본 선택: 최근 본 도시(hw6_history)가 있으면 그것으로, 없으면 첫 번째 도시
   if (weatherStore.weatherList.length > 0) {
     let defaultId = weatherStore.weatherList[0].id
@@ -33,7 +33,7 @@ onMounted(async () => {
         const historyList = JSON.parse(historyData)
         if (historyList.length > 0) {
           const recentId = historyList[0].id
-          const found = weatherStore.weatherList.find(c => c.id === recentId)
+          const found = weatherStore.weatherList.find((c) => c.id === recentId)
           if (found) defaultId = found.id
         }
       }
@@ -44,22 +44,22 @@ onMounted(async () => {
 
 watch(selectedCityId, async (newId) => {
   if (!newId) return
-  
-  const targetCity = weatherStore.weatherList.find(c => c.id === newId)
+
+  const targetCity = weatherStore.weatherList.find((c) => c.id === newId)
   if (!targetCity || !targetCity.lat || !targetCity.lon) {
     ElMessage.warning('해당 도시의 좌표 정보를 찾을 수 없습니다.')
     return
   }
-  
+
   isLoading.value = true
   pollutionData.value = null
-  
+
   try {
     const data = await weatherStore.fetchAirPollution(targetCity.lat, targetCity.lon)
     pollutionData.value = {
       cityInfo: targetCity,
       aqi: data.list[0].main.aqi,
-      components: data.list[0].components
+      components: data.list[0].components,
     }
   } catch (err) {
     ElMessage.error('대기질 데이터를 불러오는 데 실패했습니다.')
@@ -88,9 +88,15 @@ watch(selectedCityId, async (newId) => {
       <div v-if="isLoading" class="loading-area">
         <el-skeleton :rows="5" animated />
       </div>
-      
+
       <div v-else-if="pollutionData" class="pollution-content">
-        <div class="aqi-banner" :style="{ backgroundColor: aqiMap[pollutionData.aqi].bg, borderColor: aqiMap[pollutionData.aqi].color }">
+        <div
+          class="aqi-banner"
+          :style="{
+            backgroundColor: aqiMap[pollutionData.aqi].bg,
+            borderColor: aqiMap[pollutionData.aqi].color,
+          }"
+        >
           <div class="aqi-icon">{{ aqiMap[pollutionData.aqi].icon }}</div>
           <div class="aqi-info">
             <h3>{{ pollutionData.cityInfo.name }} 대기질 상태</h3>
@@ -128,8 +134,13 @@ watch(selectedCityId, async (newId) => {
           </div>
         </div>
       </div>
-      
-      <el-alert v-else-if="!isLoading && !selectedCityId" title="상단에서 도시를 선택해 주세요." type="info" :closable="false" />
+
+      <el-alert
+        v-else-if="!isLoading && !selectedCityId"
+        title="상단에서 도시를 선택해 주세요."
+        type="info"
+        :closable="false"
+      />
     </BaseDashboardCard>
   </div>
 </template>
@@ -190,12 +201,12 @@ watch(selectedCityId, async (newId) => {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   transition: transform 0.2s;
 }
 .component-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 .comp-name {
   font-size: 0.85rem;

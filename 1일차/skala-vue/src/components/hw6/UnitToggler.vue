@@ -7,7 +7,7 @@ const configStore = useConfigStore()
 <template>
   <div class="unit-toggler">
     <span class="unit-text">
-      날씨 단위: 
+      날씨 단위:
       <strong>{{ configStore.unitSymbol }}</strong>
     </span>
     <el-button size="small" type="primary" plain @click="configStore.toggleUnit">

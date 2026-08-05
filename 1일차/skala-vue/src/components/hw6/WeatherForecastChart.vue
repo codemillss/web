@@ -3,7 +3,14 @@ import { computed } from 'vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, BarChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent, LegendComponent, DataZoomComponent, MarkPointComponent, MarkLineComponent } from 'echarts/components'
+import {
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  DataZoomComponent,
+  MarkPointComponent,
+  MarkLineComponent,
+} from 'echarts/components'
 import VChart from 'vue-echarts'
 
 // ECharts 모듈 등록
@@ -16,14 +23,14 @@ use([
   LegendComponent,
   DataZoomComponent,
   MarkPointComponent,
-  MarkLineComponent
+  MarkLineComponent,
 ])
 
 const props = defineProps({
   forecastData: {
     type: Object,
-    required: true
-  }
+    required: true,
+  },
 })
 
 // 차트에 필요한 옵션 데이터 구성
@@ -31,37 +38,37 @@ const chartOption = computed(() => {
   if (!props.forecastData || !props.forecastData.list) return {}
 
   const list = props.forecastData.list
-  
+
   // X축: 시간 데이터 가공 (예: 8/4 15시)
-  const times = list.map(item => {
+  const times = list.map((item) => {
     const date = new Date(item.dt * 1000)
     return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}시`
   })
 
   // Y축: 기온, 습도
-  const temps = list.map(item => Math.round(item.main.temp * 10) / 10)
-  const humidities = list.map(item => item.main.humidity)
+  const temps = list.map((item) => Math.round(item.main.temp * 10) / 10)
+  const humidities = list.map((item) => item.main.humidity)
 
   return {
     tooltip: {
       trigger: 'axis',
-      axisPointer: { type: 'cross' }
+      axisPointer: { type: 'cross' },
     },
     legend: {
-      data: ['기온(°C)', '습도(%)']
+      data: ['기온(°C)', '습도(%)'],
     },
     grid: {
       left: '3%',
       right: '4%',
       bottom: '15%',
-      containLabel: true
+      containLabel: true,
     },
     dataZoom: [
       {
         type: 'slider',
         start: 0,
-        end: 50 // 기본적으로 절반만 보여줌 (드래그로 탐색)
-      }
+        end: 50, // 기본적으로 절반만 보여줌 (드래그로 탐색)
+      },
     ],
     xAxis: {
       type: 'category',
@@ -69,8 +76,8 @@ const chartOption = computed(() => {
       data: times,
       axisLabel: {
         rotate: 45,
-        fontSize: 11
-      }
+        fontSize: 11,
+      },
     },
     yAxis: [
       {
@@ -78,8 +85,8 @@ const chartOption = computed(() => {
         name: '기온',
         position: 'left',
         axisLabel: {
-          formatter: '{value} °C'
-        }
+          formatter: '{value} °C',
+        },
       },
       {
         type: 'value',
@@ -88,9 +95,9 @@ const chartOption = computed(() => {
         min: 0,
         max: 100,
         axisLabel: {
-          formatter: '{value} %'
-        }
-      }
+          formatter: '{value} %',
+        },
+      },
     ],
     series: [
       {
@@ -102,16 +109,22 @@ const chartOption = computed(() => {
         areaStyle: {
           color: {
             type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [{ offset: 0, color: 'rgba(255, 82, 82, 0.4)' }, { offset: 1, color: 'rgba(255, 82, 82, 0)' }]
-          }
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(255, 82, 82, 0.4)' },
+              { offset: 1, color: 'rgba(255, 82, 82, 0)' },
+            ],
+          },
         },
         markPoint: {
           data: [
             { type: 'max', name: 'Max' },
-            { type: 'min', name: 'Min' }
-          ]
-        }
+            { type: 'min', name: 'Min' },
+          ],
+        },
       },
       {
         name: '습도(%)',
@@ -119,9 +132,9 @@ const chartOption = computed(() => {
         yAxisIndex: 1,
         data: humidities,
         itemStyle: { color: 'rgba(64, 158, 255, 0.4)' },
-        barWidth: '50%'
-      }
-    ]
+        barWidth: '50%',
+      },
+    ],
   }
 })
 </script>
@@ -141,7 +154,7 @@ const chartOption = computed(() => {
   background: #fff;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   margin-top: 24px;
 }
 .chart-title {

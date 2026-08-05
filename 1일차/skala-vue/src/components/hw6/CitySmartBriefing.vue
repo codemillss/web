@@ -4,16 +4,16 @@ import { computed } from 'vue'
 const props = defineProps({
   city: {
     type: Object,
-    required: true
-  }
+    required: true,
+  },
 })
 
 const summaryText = computed(() => {
   if (!props.city) return '해당 도시의 날씨 데이터를 분석할 수 없습니다.'
-  
+
   const c = props.city
   let briefing = `${c.name} 지역의 실시간 날씨 데이터 분석 결과입니다. `
-  
+
   const temp = Math.round(c.temp)
   if (temp >= 30) {
     briefing += `기온이 ${temp}°C로 무더운 날씨를 보이고 있습니다. 야외 활동 시 온열 질환에 유의하시기 바랍니다. `
@@ -75,7 +75,10 @@ const summaryText = computed(() => {
 .ai-briefing-wrapper::before {
   content: '';
   position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: url('data:image/svg+xml;utf8,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.05)"/></svg>');
   z-index: 1;
 }

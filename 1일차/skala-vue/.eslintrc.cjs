@@ -9,5 +9,9 @@ module.exports = {
   ],
   parserOptions: {
     ecmaVersion: 'latest'
+  },
+  rules: {
+    'eqeqeq': ['error', 'always'],
+    'no-console': 'off'
   }
 }
