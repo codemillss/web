@@ -647,7 +647,8 @@ const handleUpdateQuery = (newQuery) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
-  align-items: start;
+  align-content: start;
+  align-items: stretch;
 }
 .weather-scroll-container::-webkit-scrollbar {
   width: 6px;
