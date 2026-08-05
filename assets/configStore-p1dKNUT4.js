@@ -1,0 +1,1 @@
+import{u as e,ut as t}from"./_plugin-vue_export-helper-ClNJU8bC.js";import{n}from"./pinia-w6SScF8W.js";var r=n(`config`,()=>{let n=t(`celsius`);return{unit:n,unitSymbol:e(()=>n.value===`celsius`?`℃`:`℉`),toggleUnit:()=>{n.value=n.value===`celsius`?`fahrenheit`:`celsius`}}});export{r as t};
