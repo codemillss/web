@@ -10,6 +10,10 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
   const error = ref(null)
   const isAdding = ref(false) // 개별 도시 추가 로딩 상태
 
+  const getApiKey = () => {
+    return localStorage.getItem('hw6_user_api_key') || import.meta.env.VITE_OPENWEATHER_API_KEY
+  }
+
   // 로컬스토리지에서 저장된 도시 목록 가져오기
   const CITIES_VERSION = 'hw6_saved_cities_v8'
   const getSavedCities = () => {
@@ -143,7 +147,7 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
     isLoading.value = true
     error.value = null
 
-    const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY
+    const apiKey = getApiKey()
     if (!apiKey || apiKey === 'your_api_key_here') {
       console.warn('OpenWeatherMap API Key가 없어서 임시 MOCK 데이터를 사용합니다.')
       setTimeout(() => {
@@ -444,7 +448,7 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
   const addCity = async (cityName) => {
     if (!cityName.trim()) return
 
-    const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY
+    const apiKey = getApiKey()
     if (!apiKey || apiKey === 'your_api_key_here') {
       ElMessage.warning('API Key가 없어서 도시를 추가할 수 없습니다.')
       return
@@ -566,7 +570,7 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
 
   // 5일 주간 예보 가져오기 (특수 지역 독도/울릉도 및 커스텀 이름 매핑 지원)
   const fetchForecast = async (lat, lon, cityNameOverride = '') => {
-    const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY
+    const apiKey = getApiKey()
     if (!apiKey || apiKey === 'your_api_key_here') {
       console.warn('API Key 없음: MOCK 주간 예보 데이터를 사용합니다.')
       return generateMockForecast(lat, lon, cityNameOverride)
@@ -605,7 +609,7 @@ export const useHw6WeatherStore = defineStore('hw6Weather', () => {
 
   // 대기질(미세먼지) 가져오기 (lat, lon 필요)
   const fetchAirPollution = async (lat, lon) => {
-    const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY
+    const apiKey = getApiKey()
     if (!apiKey || apiKey === 'your_api_key_here') {
       console.warn('API Key 없음: MOCK 대기질 데이터를 사용합니다.')
       return generateMockAirPollution()

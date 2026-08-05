@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink, RouterView, useRoute } from 'vue-router'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import UnitToggler from '@/components/hw6/UnitToggler.vue'
 
 const route = useRoute()
@@ -15,6 +15,24 @@ const currentPageName = computed(() => {
   }
   return nameMap[route.name] || ''
 })
+
+const showSettings = ref(false)
+const userApiKey = ref('')
+
+const openSettings = () => {
+  userApiKey.value = localStorage.getItem('hw6_user_api_key') || ''
+  showSettings.value = true
+}
+
+const saveSettings = () => {
+  if (userApiKey.value.trim()) {
+    localStorage.setItem('hw6_user_api_key', userApiKey.value.trim())
+  } else {
+    localStorage.removeItem('hw6_user_api_key')
+  }
+  showSettings.value = false
+  window.location.reload()
+}
 </script>
 
 <template>
@@ -50,7 +68,8 @@ const currentPageName = computed(() => {
             <span>이용 가이드</span>
           </RouterLink>
         </nav>
-        <div class="toggler-wrapper">
+        <div class="toggler-wrapper" style="display: flex; align-items: center;">
+          <el-button size="small" plain round @click="openSettings" style="margin-right: 12px;">⚙️ API 설정</el-button>
           <UnitToggler />
         </div>
       </div>
@@ -71,6 +90,26 @@ const currentPageName = computed(() => {
         <span class="footer-tech">Vue 3 · Pinia · Globe.gl · OpenWeatherMap API</span>
       </div>
     </footer>
+
+    <!-- API 설정 모달 -->
+    <el-dialog v-model="showSettings" title="⚙️ 시스템 설정" width="400px" center>
+      <div style="margin-bottom: 10px; font-size: 13px; color: #606266;">
+        채점자용 API Key 입력란입니다.<br />
+        입력 시 환경 변수(.env)보다 우선적으로 적용됩니다.
+      </div>
+      <el-input
+        v-model="userApiKey"
+        placeholder="OpenWeatherMap API Key 입력..."
+        clearable
+        @keyup.enter="saveSettings"
+      />
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showSettings = false">취소</el-button>
+          <el-button type="primary" @click="saveSettings">저장 및 새로고침</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
